@@ -2,13 +2,17 @@ use crate::chess::board::Board;
 use crate::chess::board::SideBoard;
 use crate::utils::notation;
 
+use super::board::Square;
+
+#[derive(Clone, Copy)]
 pub enum Variant {
     Classical,
 }
 
+#[derive(Clone, Copy, PartialEq)]
 pub enum Side {
-    White,
-    Black,
+    White = 0,
+    Black = 1,
 }
 
 pub struct Game {
@@ -19,7 +23,7 @@ pub struct Game {
     white_castle_queenside: bool,
     black_castle_kingside: bool,
     black_castle_queenside: bool,
-    ep_square: u8,
+    ep_square: Option<Square>,
     half_move: u8,
     full_move: u16,
 }
@@ -61,8 +65,8 @@ impl Game {
         }
 
         let ep_square = match fen_ep_square {
-            "-" => 64,
-            _ => notation::algebraic_square_to_bit(fen_ep_square),
+            "-" => None,
+            _ => Some(Square::new(notation::algebraic_square_to_bit(fen_ep_square))),
         };
         let half_move: u8 = fen_half_move.parse().unwrap();
         let full_move: u16 = fen_full_move.parse().unwrap();
@@ -96,9 +100,25 @@ impl Game {
             white_castle_queenside: false,
             black_castle_kingside: false,
             black_castle_queenside: false,
-            ep_square: 64,
+            ep_square: None,
             half_move: 0,
             full_move: 1,
         }
+    }
+
+    pub fn kind(&self) -> Variant {
+        self.kind
+    }
+
+    pub fn board(&self) -> &Board {
+        &self.board
+    }
+
+    pub fn active(&self) -> Side {
+        self.active
+    }
+
+    pub fn ep_square(&self) -> Option<Square> {
+        self.ep_square
     }
 }

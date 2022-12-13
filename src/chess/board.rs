@@ -1,5 +1,12 @@
 use crate::utils::bitboard::Bitboard;
 
+use super::game::Side;
+
+#[derive(Clone, Copy)]
+pub struct Square {
+    index: u8,
+}
+
 pub struct SideBoard {
     pawns: Bitboard,
     knights: Bitboard,
@@ -12,6 +19,32 @@ pub struct SideBoard {
 pub struct Board {
     white: SideBoard,
     black: SideBoard,
+}
+
+impl Square {
+    fn file_rank_to_index(file: u8, rank: u8) -> u8 {
+        (rank & 7) << 3 | (file & 7)
+    }
+
+    pub fn new(index: u8) -> Self {
+        Self { index: index }
+    }
+
+    pub fn new_file_rank(file: u8, rank: u8) -> Self {
+        Self::new(Self::file_rank_to_index(file, rank))
+    }
+
+    pub fn index(&self) -> u8 {
+        self.index
+    }
+
+    pub fn file(&self) -> u8 {
+        self.index & 7
+    }
+
+    pub fn rank(&self) -> u8 {
+        (self.index >> 3) & 7
+    }
 }
 
 impl SideBoard {
@@ -67,6 +100,10 @@ impl SideBoard {
     pub fn kings(&self) -> Bitboard {
         self.kings
     }
+
+    pub fn occupied(&self) -> Bitboard {
+        self.pawns | self.knights | self.bishops | self.rooks | self.queens | self.kings
+    }
 }
 
 impl Board {
@@ -96,39 +133,38 @@ impl Board {
         let mut white_kings = Bitboard::new();
         let mut black_kings = Bitboard::new();
 
-        for row in (0..8).rev() {
-            let bit_rank = (row * 8) as u8;
-            let row_string = row_strings[row];
-            let mut tile = 0 as u8;
+        for rank in (0..8).rev() {
+            let row_string = row_strings[7 - rank];
+            let mut file = 0 as u8;
             for row_char in row_string.chars() {
-                let bit = bit_rank + tile as u8;
+                let square = Square::new_file_rank(file, rank as u8);
                 if row_char.is_numeric() {
                     let row_number = row_char.to_digit(10);
                     match row_number {
-                        Some(x) => tile += x as u8,
+                        Some(x) => file += x as u8,
                         None => panic!("Invalid piece fen {}", fen),
                     }
                 } else {
                     match row_char {
-                        'p' => black_pawns.set(bit),
-                        'n' => black_knights.set(bit),
-                        'b' => black_bishops.set(bit),
-                        'r' => black_rooks.set(bit),
-                        'q' => black_queens.set(bit),
-                        'k' => black_kings.set(bit),
-                        'P' => white_pawns.set(bit),
-                        'N' => white_knights.set(bit),
-                        'B' => white_bishops.set(bit),
-                        'R' => white_rooks.set(bit),
-                        'Q' => white_queens.set(bit),
-                        'K' => white_kings.set(bit),
+                        'p' => black_pawns.set(square),
+                        'n' => black_knights.set(square),
+                        'b' => black_bishops.set(square),
+                        'r' => black_rooks.set(square),
+                        'q' => black_queens.set(square),
+                        'k' => black_kings.set(square),
+                        'P' => white_pawns.set(square),
+                        'N' => white_knights.set(square),
+                        'B' => white_bishops.set(square),
+                        'R' => white_rooks.set(square),
+                        'Q' => white_queens.set(square),
+                        'K' => white_kings.set(square),
                         _ => panic!("Invalid piece character {}", row_char),
                     }
 
-                    tile += 1;
+                    file += 1;
                 }
 
-                if tile == 8 {
+                if file == 8 {
                     break;
                 }
             }
@@ -181,5 +217,25 @@ impl Board {
             white: white_pieces,
             black: black_pieces,
         }
+    }
+
+    pub fn white_pieces(&self) -> &SideBoard {
+        &self.white
+    }
+
+    pub fn black_pieces(&self) -> &SideBoard {
+        &self.black
+    }
+
+    pub fn side_pieces(&self, side: Side) -> &SideBoard {
+        if side == Side::White {
+            self.white_pieces()
+        } else {
+            self.black_pieces()
+        }
+    }
+
+    pub fn occupied(&self) -> Bitboard {
+        self.white.occupied() | self.black.occupied()
     }
 }
