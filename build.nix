@@ -1,12 +1,7 @@
-{ lib, rustPlatform }:
+{ lib, rustPlatform, pname, version, src, cargoLock }:
 
 rustPlatform.buildRustPackage {
-  pname = "chess-engine-rs";
-  version = "0.1.0";
-
-  src = ./.;
-
-  cargoLock = { lockFile = ./Cargo.lock; };
+  inherit pname version src cargoLock;
 
   meta = with lib; {
     description = "yet another chess engine, written in rust";

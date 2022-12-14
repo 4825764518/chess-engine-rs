@@ -14,9 +14,16 @@
       in {
         devShells.default = import ./shell.nix { inherit pkgs; };
 
-        packages = rec {
-          chess-engine-rs =
-            import ./build.nix { inherit (pkgs) lib rustPlatform; };
+        packages = let
+          version = "0.1.0";
+          cargoLock = { lockFile = ./Cargo.lock; };
+        in rec {
+          chess-engine-rs = import ./build.nix {
+            inherit (pkgs) lib rustPlatform;
+            inherit version cargoLock;
+            pname = "chess-engine-rs";
+            src = ./.;
+          };
           default = chess-engine-rs;
         };
       });
